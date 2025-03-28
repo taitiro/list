@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     dateSelector.value = today;
     
+    // チェックリストの内容を読み込む
+    loadChecklistContent();
+    
     // ページ読み込み時にローカルストレージからチェック状態を復元
     loadCheckboxStates();
     
@@ -19,17 +22,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // チェックボックスの状態が変更されたときのイベントリスナーを追加
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('checkbox')) {
             // チェックボックスの状態をローカルストレージに保存
-            saveCheckboxState(this.id, this.checked);
+            saveCheckboxState(e.target.id, e.target.checked);
             
             // ラベルのスタイルを更新
-            updateLabelStyle(this);
+            updateLabelStyle(e.target);
             
             // 履歴を更新
             updateHistory();
-        });
+        }
     });
     
     // リセットボタンのイベントリスナー
@@ -40,10 +43,60 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHistory();
     });
     
+    // チェックリストの内容を読み込む関数
+    async function loadChecklistContent() {
+        try {
+            const response = await fetch('list.md');
+            const text = await response.text();
+            const lines = text.split('\n');
+            
+            let currentCategory = '';
+            let currentList = null;
+            const categories = {
+                '良好サイン': { element: document.getElementById('good-signs'), class: 'good' },
+                '注意サイン': { element: document.getElementById('warning-signs'), class: 'warning' },
+                '悪化サイン': { element: document.getElementById('danger-signs'), class: 'danger' }
+            };
+            
+            // 各カテゴリーのリストをクリア
+            Object.values(categories).forEach(cat => {
+                cat.element.innerHTML = '';
+            });
+            
+            // 行を処理
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                if (line.startsWith('# ')) {
+                    // カテゴリーの開始
+                    currentCategory = line.substring(2);
+                    currentList = categories[currentCategory]?.element;
+                } else if (line.startsWith('- ') && currentList) {
+                    // チェックリスト項目
+                    const itemText = line.substring(2);
+                    const itemId = `${currentCategory.toLowerCase().replace('サイン', '')}-${currentList.children.length + 1}`;
+                    
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <input type="checkbox" id="${itemId}" class="checkbox">
+                        <label for="${itemId}">${itemText}</label>
+                    `;
+                    currentList.appendChild(li);
+                }
+            });
+            
+            // チェックボックスの状態を再読み込み
+            loadCheckboxStates();
+        } catch (error) {
+            console.error('チェックリストの読み込みに失敗しました:', error);
+        }
+    }
+    
     // ローカルストレージからチェックボックスの状態を読み込む関数
     function loadCheckboxStates() {
         const selectedDate = dateSelector.value;
-        checkboxes.forEach(checkbox => {
+        document.querySelectorAll('.checkbox').forEach(checkbox => {
             // ローカルストレージから状態を取得
             const storageKey = `${checkbox.id}_${selectedDate}`;
             const isChecked = localStorage.getItem(storageKey) === 'true';
@@ -77,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // すべてのチェックボックスをリセットする関数
     function resetAllCheckboxes() {
         const selectedDate = dateSelector.value;
-        checkboxes.forEach(checkbox => {
+        document.querySelectorAll('.checkbox').forEach(checkbox => {
             // チェックボックスをオフに設定
             checkbox.checked = false;
             
@@ -123,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const checkedItems = [];
             
             // その日のチェックされた項目を取得
-            checkboxes.forEach(checkbox => {
+            document.querySelectorAll('.checkbox').forEach(checkbox => {
                 const storageKey = `${checkbox.id}_${currentDate}`;
                 if (localStorage.getItem(storageKey) === 'true') {
                     const label = document.querySelector(`label[for="${checkbox.id}"]`);
