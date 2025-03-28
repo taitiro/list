@@ -78,10 +78,59 @@
         .reset-button:hover {
             background-color: #555;
         }
+        .date-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .date-selector input {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .history-section {
+            margin-top: 30px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .history-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-date {
+            font-weight: bold;
+            color: #666;
+            min-width: 120px;
+        }
+        .history-content {
+            margin-left: 20px;
+            flex: 1;
+        }
+        .weekday-sun {
+            color: #f44336;
+        }
+        .weekday-sat {
+            color: #2196f3;
+        }
+        .weekday-weekday {
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <h1>チェックリスト</h1>
+    
+    <div class="date-selector">
+        <input type="date" id="dateSelector">
+    </div>
     
     <div class="category good">
         <h2>良好サイン</h2>
@@ -126,6 +175,11 @@
     </div>
     
     <button class="reset-button" id="reset">チェックをリセット</button>
+
+    <div class="history-section">
+        <h2>過去の記録</h2>
+        <div id="historyList"></div>
+    </div>
 
     <script src="script.js"></script>
 </body>
